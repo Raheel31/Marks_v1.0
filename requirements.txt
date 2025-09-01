@@ -5,3 +5,9 @@ pandas
 pytest
 matplotlib
 numpy
+requests
+beautifulsoup4
+sklearn
+os
+pathlib
+spotipy
