@@ -2,9 +2,6 @@ fastapi
 uvicorn
 scikit-learn
 pandas
-pytest
 matplotlib
 numpy
-os
-pathlib
 spotipy
