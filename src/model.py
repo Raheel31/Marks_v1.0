@@ -112,7 +112,7 @@ def recommend_songs_random(genre, n=5) -> list:
         
         selected = available_songs.sample(min(n, len(available_songs)), replace=False)
         
-        recommended_history.update(selected["song_id"].tolist())
+        recommended_history.update(selected["trackname"].tolist())
         
         return selected[["trackname", "artistnames", "maingenre", "chords"]]
     except Exception as e:
