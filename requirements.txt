@@ -5,8 +5,6 @@ pandas
 pytest
 matplotlib
 numpy
-requests
-beautifulsoup4
 os
 pathlib
 spotipy
