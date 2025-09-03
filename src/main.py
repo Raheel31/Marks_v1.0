@@ -26,8 +26,8 @@ def random_exercises(genre: str = Query(..., description="Genre of exercises")):
     try:
         result = model2(genre)
         return {"genre": genre, "recommendations": result}
-    except Exception as e: # pylint: disable=broad-exception-caught
-        logger.error("Error fetching API: %S",e)
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error("Error fetching API: %s", e)
         return {"error": str(e)}
 
 @app.get("/recommendations")
