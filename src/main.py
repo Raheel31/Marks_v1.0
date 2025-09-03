@@ -15,6 +15,17 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 df_prod_file_path = os.path.join(base_dir, '..', 'data', 'processed', 'prod_data.parquet')
 exercise_df_path = os.path.join(base_dir, '..','data','processed','chord_exercises.parquet')
 
+try:
+    exercise_df = pd.read_parquet(exercise_df_path, columns=['exercise_id',
+                                                             'tempo', 'feature_vector'])
+    prod_data = pd.read_parquet(df_prod_file_path, columns= ['trackname', 
+                                                             'artistnames', 'maingenre',
+                                                             'chords', 'difficulty_level', 
+                                                             'feature_vector'])
+except Exception as e:
+    logger.error("Failed to load data: %s", e)
+    raise
+
 app = FastAPI(title="Exercise Recommendation API")
 
 @app.get("/")
@@ -37,8 +48,6 @@ def recommendations(
     genre: str = Query(..., description="Genre")
 ):
     try:
-        exercise_df = pd.read_parquet(exercise_df_path)
-        prod_data = pd.read_parquet(df_prod_file_path)
         result = model1(input_df=exercise_df, prod_df=prod_data,
                         tempo=tempo, exercise_id=exercise_id, genre=genre)
         return result
