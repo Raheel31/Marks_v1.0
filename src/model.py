@@ -1,5 +1,4 @@
 import os
-import sys
 import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
@@ -49,27 +48,41 @@ def cluster_function(df : pd.DataFrame)-> pd.DataFrame:
         logger.error("Error in clustering marks dataset : %s", e)
         raise
     
-def recommend_songs(input_df, prod_df, exercise_id, tempo, genre,top_n=5): 
-    """ Recommend top_n songs similar to the given exercise and tempo. 
+def recommend_songs(input_df, prod_df, exercise_id, tempo, genre,top_n=5):
+    """
+    Recommend top_n songs similar to the given exercise and tempo.
     
-    Parameters: input_df (pd.DataFrame): DataFrame with exercise_id, tempo, feature_vector
-    prod_df (pd.DataFrame): DataFrame with song info and feature_vector 
-    exercise_id (int): ID of the exercise selected by the user 
-    tempo (int/float): Tempo selected by the user genre (string) : Genre fo the song to recommend 
-    top_n (int): Number of recommendations Returns: pd.DataFrame: Top N recommended songs with similarity scores 
-    """ 
-    try: 
-        exercise_row = input_df[(input_df['exercise_id'] == exercise_id) & (input_df['tempo'] == tempo)] 
-        if exercise_row.empty: 
-            raise ValueError("No exercise found with given ID and tempo") 
-        exercise_vector = np.array(exercise_row['feature_vector'].iloc[0]).reshape(1, -1) 
-        song_vectors = np.vstack(prod_df['feature_vector'].values) 
-        similarities = cosine_similarity(exercise_vector, song_vectors)[0] 
-        prod_df['similarity'] = similarities 
-        recommendations = prod_df[(prod_df['maingenre'] == genre)] 
-        top_recommendations = recommendations.sort_values(by='similarity', ascending=False).head(top_n) 
-        return top_recommendations[['trackname', 'artistnames', 'genres','chords', 'difficulty_level']] 
-    except Exception as e: 
+    Parameters:
+        input_df (pd.DataFrame): DataFrame with exercise_id, tempo, feature_vector
+        prod_df (pd.DataFrame): DataFrame with song info and feature_vector
+        exercise_id (int): ID of the exercise selected by the user
+        tempo (int/float): Tempo selected by the user
+        genre (string) : Genre fo the song to recommend
+        top_n (int): Number of recommendations
+    
+    Returns:
+        pd.DataFrame: Top N recommended songs with similarity scores
+    """
+    try:
+        exercise_row = input_df[(input_df['exercise_id'] == exercise_id) & 
+                                (input_df['tempo'] == tempo)]
+            
+        if exercise_row.empty:
+            raise ValueError("No exercise found with given ID and tempo")
+
+        exercise_vector = np.array(exercise_row['feature_vector'].iloc[0]).reshape(1, -1)
+
+        song_vectors = np.vstack(prod_df['feature_vector'].values)
+        
+        similarities = cosine_similarity(exercise_vector, song_vectors)[0]
+
+        prod_df['similarity'] = similarities
+        
+        recommendations = prod_df[(prod_df['maingenre'] == genre)]
+        top_recommendations = recommendations.sort_values(by='similarity', ascending=False).head(top_n)
+        
+        return top_recommendations[['trackname', 'artistnames', 'genres','chords', 'difficulty_level']]
+    except Exception as e:
         logger.error("Error in generating recommendations : %s", e)
         raise
     
