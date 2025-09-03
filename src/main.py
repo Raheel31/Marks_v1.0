@@ -11,15 +11,8 @@ from logger import get_logger # pylint: disable=import-error
 logger = get_logger(__name__)
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
-df_prod_file_path = os.path.join(base_dir, '..', 'data', 'processed', 'prod_data.csv')
-exercise_df_path = os.path.join(base_dir, '..','data','processed','chord_exercises.csv')
-
-try:
-    exercise_df = pd.read_csv(exercise_df_path, columns=['exercise_id',
-                                                             'tempo', 'feature_vector'])
-except Exception as e:
-    logger.error("Failed to load data: %s", e)
-    raise
+df_prod_file_path = os.path.join(base_dir, '..', 'data', 'processed', 'prod_data.parquet')
+exercise_df_path = os.path.join(base_dir, '..','data','processed','chord_exercises.parquet')
 
 app = FastAPI(title="Exercise Recommendation API")
 
@@ -34,7 +27,9 @@ def recommendations(
     genre: str = Query(..., description="Genre")
 ):
     try:
-        prod_data = pd.read_csv(df_prod_file_path, columns= ['trackname', 
+        exercise_df = pd.read_parquet(exercise_df_path, columns=['exercise_id',
+                                                             'tempo', 'feature_vector'])
+        prod_data = pd.read_parquet(df_prod_file_path, columns= ['trackname', 
                                                              'artistnames', 'maingenre',
                                                              'chords', 'difficulty_level', 
                                                              'feature_vector'])
