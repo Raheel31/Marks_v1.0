@@ -6,7 +6,6 @@ import uvicorn
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from model import recommend_songs as model1 # pylint: disable=import-error
-from model import recommend_songs_random as model2 # pylint: disable=import-error
 from logger import get_logger # pylint: disable=import-error
 
 logger = get_logger(__name__)
