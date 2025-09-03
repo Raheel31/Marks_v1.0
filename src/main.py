@@ -17,10 +17,6 @@ exercise_df_path = os.path.join(base_dir, '..','data','processed','chord_exercis
 try:
     exercise_df = pd.read_parquet(exercise_df_path, columns=['exercise_id',
                                                              'tempo', 'feature_vector'])
-    prod_data = pd.read_parquet(df_prod_file_path, columns= ['trackname', 
-                                                             'artistnames', 'maingenre',
-                                                             'chords', 'difficulty_level', 
-                                                             'feature_vector'])
 except Exception as e:
     logger.error("Failed to load data: %s", e)
     raise
@@ -38,6 +34,10 @@ def recommendations(
     genre: str = Query(..., description="Genre")
 ):
     try:
+        prod_data = pd.read_parquet(df_prod_file_path, columns= ['trackname', 
+                                                             'artistnames', 'maingenre',
+                                                             'chords', 'difficulty_level', 
+                                                             'feature_vector'])
         result = model1(input_df=exercise_df, prod_df=prod_data,
                         tempo=tempo, exercise_id=exercise_id, genre=genre)
         return result
