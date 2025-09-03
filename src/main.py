@@ -32,15 +32,6 @@ app = FastAPI(title="Exercise Recommendation API")
 def home():
     return {"message": "Welcome to the Exercise Recommendation API"}
 
-@app.get("/random_exercises")
-def random_exercises(genre: str = Query(..., description="Genre of exercises")):
-    try:
-        result = model2(genre)
-        return {"genre": genre, "recommendations": result}
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.error("Error fetching API: %s", e)
-        return {"error": str(e)}
-
 @app.get("/recommendations")
 def recommendations(
     tempo: int = Query(..., description="Tempo value"),

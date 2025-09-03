@@ -78,8 +78,8 @@ def recommend_songs(input_df, prod_df, exercise_id, tempo, genre, top_n=5):
     except Exception as e:
         logger.error("Error in generating recommendations : %s", e)
         raise
-
     
+"""
 songs_df = None
 recommended_history = set()
 
@@ -93,9 +93,6 @@ except Exception as e: #pylint: disable=broad-exception-caught
 
 
 def recommend_songs_random(genre, n=5) -> list:
-    """
-    Function to retrieve random recommendations
-    """
     try:
         global recommended_history #pylint: disable=global-variable-not-assigned
 
@@ -118,6 +115,7 @@ def recommend_songs_random(genre, n=5) -> list:
     except Exception as e:
         logger.error("Error retrieving random recommendations: %s", e)
         raise
+"""
 
 if __name__ == '__main__':
     base_dir = os.path.dirname(os.path.abspath(__file__))
