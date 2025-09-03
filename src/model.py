@@ -85,8 +85,8 @@ recommended_history = set()
 
 try:
     base_dir_temp = os.path.dirname(os.path.abspath(__file__))
-    data_path = os.path.join(base_dir_temp, '..', 'data', 'processed', 'prod_data.parquet')
-    songs_df = pd.read_parquet(data_path)
+    data_path = os.path.join(base_dir_temp, '..', 'data', 'processed', 'marks_data.parquet')
+    songs_df = pd.read_parquet(data_path, columns=["trackname", "artistnames", "maingenre", "chords"])
 except Exception as e: #pylint: disable=broad-exception-caught
     logger.error(f"Failed to load dataset: {e}")
     songs_df = pd.DataFrame()
