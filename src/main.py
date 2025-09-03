@@ -6,7 +6,6 @@ import uvicorn
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from model import recommend_songs as model1 # pylint: disable=import-error
-
 from logger import get_logger # pylint: disable=import-error
 
 logger = get_logger(__name__)
@@ -21,7 +20,6 @@ app = FastAPI(title="Exercise Recommendation API")
 def home():
     return {"message": "Welcome to the Exercise Recommendation API"}
 
-
 @app.get("/recommendations")
 def recommendations(
     tempo: int = Query(..., description="Tempo value"),
@@ -29,7 +27,9 @@ def recommendations(
     genre: str = Query(..., description="Genre")
 ):
     try:
+        logger.info("Reading Exercise Data")
         exercise_df = pd.read_parquet(exercise_df_path)
+        logger.info("Reading Prod Data")
         prod_data = pd.read_parquet(df_prod_file_path)
         result = model1(input_df=exercise_df, prod_df=prod_data,
                         tempo=tempo, exercise_id=exercise_id, genre=genre)
