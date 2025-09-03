@@ -3,6 +3,7 @@ import sys
 import pandas as pd
 from fastapi import FastAPI, Query
 import uvicorn
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from model import recommend_songs as model1 # pylint: disable=import-error
 from logger import get_logger # pylint: disable=import-error
@@ -25,6 +26,16 @@ def recommendations(
     exercise_id: int = Query(..., description="Exercise ID"),
     genre: str = Query(..., description="Genre")
 ):
+    """_summary_
+
+    Args:
+        tempo (int, optional): _description_. Defaults to Query(..., description="Tempo value").
+        exercise_id (int, optional): _description_. Defaults to Query(..., description="Exercise ID").
+        genre (str, optional): _description_. Defaults to Query(..., description="Genre").
+
+    Returns:
+        _type_: _description_
+    """
     try:
         exercise_df = pd.read_parquet(exercise_df_path, columns=['exercise_id',
                                                              'tempo', 'feature_vector'])
