@@ -5,7 +5,6 @@ import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics.pairwise import cosine_similarity
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from logger import get_logger # pylint: disable=import-error
 
