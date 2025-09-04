@@ -29,7 +29,11 @@ def random_exercises(genre: str = Query(..., description="Genre of exercises")):
     """Return n random exercises in batches to reduce memory usage."""
     try:
         recommended_temp = set()
-        result = model2(genre=genre, recommended_cache=recommended_temp)
+        prod_df = pd.read_parquet(
+            prod_file,
+            filters=[("maingenre", "=", genre)])
+        result = model2(genre=genre, songs_df=prod_df, recommended_cache=recommended_temp)
+
         recommended_history.update(recommended_temp)
         return result
     except Exception as e:
