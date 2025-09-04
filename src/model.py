@@ -48,58 +48,45 @@ def cluster_function(df : pd.DataFrame)-> pd.DataFrame:
         logger.error("Error in clustering marks dataset : %s", e)
         raise
     
-def recommend_songs(input_df, prod_df, exercise_id, tempo, genre,top_n=5):
+def recommend_songs(exercise_df, prod_df,exercise_id, tempo, genre, top_n=5):
     """
     Recommend top_n songs similar to the given exercise and tempo.
-    
-    Parameters:
-        input_df (pd.DataFrame): DataFrame with exercise_id, tempo, feature_vector
-        prod_df (pd.DataFrame): DataFrame with song info and feature_vector
-        exercise_id (int): ID of the exercise selected by the user
-        tempo (int/float): Tempo selected by the user
-        genre (string) : Genre fo the song to recommend
-        top_n (int): Number of recommendations
-    
-    Returns:
-        pd.DataFrame: Top N recommended songs with similarity scores
+    Works on PCA-reduced vectors.
     """
     try:
-        exercise_row = input_df[(input_df['exercise_id'] == exercise_id) & 
-                                (input_df['tempo'] == tempo)]
-            
+        exercise_row = exercise_df[(exercise_df['exercise_id'] == exercise_id) & 
+                                   (exercise_df['tempo'] == tempo)]
         if exercise_row.empty:
             raise ValueError("No exercise found with given ID and tempo")
 
         exercise_vector = np.array(exercise_row['feature_vector'].iloc[0]).reshape(1, -1)
 
         song_vectors = np.vstack(prod_df['feature_vector'].values)
-        
-        similarities = cosine_similarity(exercise_vector, song_vectors)[0]
 
+        similarities = cosine_similarity(exercise_vector, song_vectors)[0]
         prod_df['similarity'] = similarities
-        
-        recommendations = prod_df[(prod_df['maingenre'] == genre)]
+
+        recommendations = prod_df[prod_df['maingenre'] == genre]
         top_recommendations = recommendations.sort_values(by='similarity', ascending=False).head(top_n)
-        
-        return top_recommendations[['trackname', 'artistnames', 'genres','chords', 'difficulty_level']]
+
+        return top_recommendations[['trackname', 'artistnames', 'maingenre', 'chords', 'difficulty_level']]
     except Exception as e:
         logger.error("Error in generating recommendations : %s", e)
         raise
-    
-"""
-songs_df = None
+
 recommended_history = set()
 
-try:
-    base_dir_temp = os.path.dirname(os.path.abspath(__file__))
-    data_path = os.path.join(base_dir_temp, '..', 'data', 'processed', 'marks_data.parquet')
-    songs_df = pd.read_parquet(data_path, columns=["trackname", "artistnames", "maingenre", "chords"])
-except Exception as e: #pylint: disable=broad-exception-caught
-    logger.error(f"Failed to load dataset: {e}")
-    songs_df = pd.DataFrame()
+def recommend_songs_random(genre,songs_df, n=5) -> list:
+    """
+    Cluster function to retrieve random songs
 
+    Args:
+        genre (_type_): String value
+        n (int, optional): Number of records to retrieve Defaults to 5.
 
-def recommend_songs_random(genre, n=5) -> list:
+    Returns:
+        list: _description_
+    """
     try:
         global recommended_history #pylint: disable=global-variable-not-assigned
 
@@ -117,12 +104,11 @@ def recommend_songs_random(genre, n=5) -> list:
 
         recommended_history.update(selected["trackname"].tolist())
 
-        return selected[["trackname", "artistnames", "maingenre", "chords"]].to_dict(orient="records")
+        return selected[["trackname", "artistnames", "maingenre", "chords", "difficulty_level"]].to_dict(orient="records")
 
     except Exception as e:
         logger.error("Error retrieving random recommendations: %s", e)
         raise
-"""
 
 if __name__ == '__main__':
     base_dir = os.path.dirname(os.path.abspath(__file__))

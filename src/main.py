@@ -7,25 +7,36 @@ import uvicorn
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from model import recommend_songs as model1  # pylint: disable=import-error
+from model import recommend_songs_random as model2 # pylint: disable=import-error
 from logger import get_logger  # pylint: disable=import-error
 
 logger = get_logger(__name__)
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
-df_prod_file_path = os.path.join(base_dir, '..', 'data', 'processed', 'prod_data.parquet')
-exercise_df_path = os.path.join(base_dir, '..','data','processed','chord_exercises.parquet')
+data_dir = os.path.join(base_dir, "..", "data", "processed")
+
+prod_file = os.path.join(data_dir, "prod_data.parquet")
+exercise_file = os.path.join(data_dir, "chord_exercises.parquet")
 
 app = FastAPI(title="Exercise Recommendation API")
 
-# ---- LOAD DATA ONCE ----
 logger.info("Loading data at startup...")
-exercise_df = pd.read_parquet(exercise_df_path)
-prod_data = pd.read_parquet(df_prod_file_path)
+prod_df = pd.read_parquet(prod_file)
+exercise_df = pd.read_parquet(exercise_file)
 logger.info("Data loaded successfully!")
 
 @app.get("/")
 def home():
     return {"message": "Welcome to the Exercise Recommendation API"}
+
+@app.get("/random_exercises")
+def random_exercises(genre: str = Query(..., description="Genre of exercises")):
+    try:
+        result = model2(genre, songs_df=prod_df)
+        return {"genre": genre, "recommendations": result}
+    except Exception as e: # pylint: disable=broad-exception-caught
+        logger.error("Error fetching API: %S",e)
+        return {"error": str(e)}
 
 @app.get("/recommendations")
 def recommendations(
@@ -35,8 +46,8 @@ def recommendations(
 ):
     try:
         result = model1(
-            input_df=exercise_df,
-            prod_df=prod_data,
+            exercise_df=exercise_df,
+            prod_df=prod_df,
             tempo=tempo,
             exercise_id=exercise_id,
             genre=genre
@@ -46,6 +57,5 @@ def recommendations(
         logger.error("Error fetching API: %s", e)
         return {"error": str(e)}
 
-# ---- ENTRY POINT ----
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
