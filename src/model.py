@@ -47,7 +47,7 @@ def cluster_function(df : pd.DataFrame)-> pd.DataFrame:
     except Exception as e:
         logger.error("Error in clustering marks dataset : %s", e)
         raise
-    
+
 def recommend_songs(exercise_df, prod_df,exercise_id, tempo, genre, top_n=5):
     """
     Recommend top_n songs similar to the given exercise and tempo.
@@ -66,22 +66,20 @@ def recommend_songs(exercise_df, prod_df,exercise_id, tempo, genre, top_n=5):
         if filtered_prod_df.empty:
             raise ValueError(f"No songs found in genre '{genre}'")
 
-        song_vectors = np.vstack(filtered_prod_df['feature_vector'].values)
+        similarities = []
+        for vec in filtered_prod_df['feature_vector'].values:
+            sim = cosine_similarity(exercise_vector, np.array(vec, dtype=np.float32).reshape(1, -1))[0][0]
+            similarities.append(sim)
 
-        similarities = cosine_similarity(exercise_vector, song_vectors)[0]
-        filtered_prod_df = filtered_prod_df.copy()  # Avoid SettingWithCopyWarning
+        filtered_prod_df = filtered_prod_df.copy()
         filtered_prod_df['similarity'] = similarities
-
         top_recommendations = filtered_prod_df.sort_values(by='similarity', ascending=False).head(top_n)
-
         return top_recommendations[['trackname', 'artistnames', 'maingenre', 'chords', 'difficulty_level']]
     except Exception as e:
         logger.error("Error in generating recommendations : %s", e)
         raise
 
-recommended_history = set()
-
-def recommend_songs_random(genre,songs_df, n=5) -> list:
+def recommend_songs_random(genre,songs_df, recommended_cache, n=5) -> list:
     """
     Cluster function to retrieve random songs
 
@@ -93,24 +91,22 @@ def recommend_songs_random(genre,songs_df, n=5) -> list:
         list: _description_
     """
     try:
-        global recommended_history #pylint: disable=global-variable-not-assigned
-
         if songs_df.empty:
             return {"error": "Dataset not loaded"}
 
         genre_songs = songs_df[songs_df["maingenre"] == genre]
 
-        available_songs = genre_songs[~genre_songs["trackname"].isin(recommended_history)]
+        available_songs = genre_songs[~genre_songs["trackname"].isin(recommended_cache)]
 
         if available_songs.empty:
             return {"error": f"No new songs available for genre: {genre}"}
 
         selected = available_songs.sample(min(n, len(available_songs)), replace=False)
 
-        recommended_history.update(selected["trackname"].tolist())
+        recommended_cache.update(selected["trackname"].tolist())
 
-        return selected[["trackname", "artistnames", "maingenre", "chords", "difficulty_level"]].to_dict(orient="records")
-
+        return selected[["trackname", "artistnames", "maingenre", "chords", 
+                            "difficulty_level"]].to_dict(orient="records"),recommended_cache
     except Exception as e:
         logger.error("Error retrieving random recommendations: %s", e)
         raise

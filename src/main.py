@@ -17,6 +17,7 @@ data_dir = os.path.join(base_dir, "..", "data", "processed")
 
 prod_file = os.path.join(data_dir, "prod_data.parquet")
 exercise_file = os.path.join(data_dir, "chord_exercises.parquet")
+recommended_history = set()
 
 app = FastAPI(title="Exercise Recommendation API")
 
@@ -32,7 +33,8 @@ def random_exercises(genre: str = Query(..., description="Genre of exercises")):
             engine="pyarrow",
             filters=[("maingenre", "=", genre)]
         )
-        result = model2(genre, songs_df=prod_df)
+        result, recommended_history_temp = model2(genre, songs_df=prod_df, recommended_cache=recommended_history)
+        recommended_history.update(recommended_history_temp)
         return {"genre": genre, "recommendations": result}
     except Exception as e: # pylint: disable=broad-exception-caught
         logger.error("Error fetching API: %S",e)
