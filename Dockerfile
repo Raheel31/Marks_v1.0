@@ -10,6 +10,6 @@ COPY ./src ./src
 
 COPY ./data/processed ./data/processed
 
-EXPOSE 8000
+RUN mkdir -p /app/logs
 
 CMD ["python", "-m", "uvicorn", "src.main:Marks_v1.0-1", "--host", "0.0.0.0", "--port", "8000"]
