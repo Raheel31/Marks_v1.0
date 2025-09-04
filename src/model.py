@@ -78,7 +78,7 @@ def recommend_songs(exercise_df, prod_df,exercise_id, tempo, genre, top_n=5):
         logger.error("Error in generating recommendations : %s", e)
         raise
 
-def recommend_songs_random(genre,songs_df, recommended_cache, n=5) -> list:
+def recommend_songs_random(genre, recommended_cache, n=5) -> list:
     """
     Cluster function to retrieve random songs
 
@@ -90,8 +90,12 @@ def recommend_songs_random(genre,songs_df, recommended_cache, n=5) -> list:
         list: _description_
     """
     try:
-        if songs_df.empty:
-            return {"error": "Dataset not loaded"}
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        df_prod_file_path = os.path.join(base_dir, '..', 'data',
+                                         'processed', 'prod_data.parquet')
+        songs_df = pd.read_parquet(
+            df_prod_file_path,
+            filters=[("maingenre", "=", genre)])
 
         genre_songs = songs_df[songs_df["maingenre"] == genre]
 
