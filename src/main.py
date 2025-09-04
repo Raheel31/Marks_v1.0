@@ -3,10 +3,11 @@ import sys
 import pandas as pd
 from fastapi import FastAPI, Query
 import uvicorn
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from model import recommend_songs as model1 # pylint: disable=import-error
-from logger import get_logger # pylint: disable=import-error
+from model import recommend_songs as model1  # pylint: disable=import-error
+from logger import get_logger  # pylint: disable=import-error
 
 logger = get_logger(__name__)
 
@@ -15,6 +16,12 @@ df_prod_file_path = os.path.join(base_dir, '..', 'data', 'processed', 'prod_data
 exercise_df_path = os.path.join(base_dir, '..','data','processed','chord_exercises.parquet')
 
 app = FastAPI(title="Exercise Recommendation API")
+
+# ---- LOAD DATA ONCE ----
+logger.info("Loading data at startup...")
+exercise_df = pd.read_parquet(exercise_df_path)
+prod_data = pd.read_parquet(df_prod_file_path)
+logger.info("Data loaded successfully!")
 
 @app.get("/")
 def home():
@@ -27,15 +34,16 @@ def recommendations(
     genre: str = Query(..., description="Genre")
 ):
     try:
-        logger.info("Reading Exercise Data")
-        exercise_df = pd.read_parquet(exercise_df_path)
-        logger.info("Reading Prod Data")
-        prod_data = pd.read_parquet(df_prod_file_path)
-        result = model1(input_df=exercise_df, prod_df=prod_data,
-                        tempo=tempo, exercise_id=exercise_id, genre=genre)
+        result = model1(
+            input_df=exercise_df,
+            prod_df=prod_data,
+            tempo=tempo,
+            exercise_id=exercise_id,
+            genre=genre
+        )
         return result
-    except Exception as e: # pylint: disable=broad-exception-caught
-        logger.error("Error fetching API: %S",e)
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error("Error fetching API: %s", e)
         return {"error": str(e)}
 
 # ---- ENTRY POINT ----
