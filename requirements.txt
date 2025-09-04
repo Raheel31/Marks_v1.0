@@ -2,7 +2,5 @@ fastapi
 uvicorn
 scikit-learn
 pandas
-matplotlib
 numpy
-spotipy
 pyarrow

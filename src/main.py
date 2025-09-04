@@ -3,12 +3,10 @@ import sys
 import pandas as pd
 from fastapi import FastAPI, Query
 import uvicorn
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from model import recommend_songs as model1  # pylint: disable=import-error
 from model import recommend_songs_random as model2 # pylint: disable=import-error
 from logger import get_logger  # pylint: disable=import-error
-
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 logger = get_logger(__name__)
 
@@ -32,11 +30,13 @@ def random_exercises(genre: str = Query(..., description="Genre of exercises")):
         prod_df = pd.read_parquet(
             prod_file,
             engine="pyarrow",
-            filters=[("maingenre", "=", genre)]
+            filters=[("maingenre", "=", genre)],
+            columns=['trackname', 'artistnames', 'maingenre', 'chords', 'difficulty_level','feature_vector']
         )
         result, recommended_history_temp = model2(genre, songs_df=prod_df, recommended_cache=recommended_history)
         recommended_history.update(recommended_history_temp)
-        return {"genre": genre, "recommendations": result}
+        return result
+#        return {"genre": genre, "recommendations": result}
     except Exception as e: # pylint: disable=broad-exception-caught
         logger.error("Error fetching API: %S",e)
         return {"error": str(e)}
