@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.metrics.pairwise import cosine_similarity
 
 from logger import get_logger # pylint: disable=import-error
 
@@ -47,78 +46,70 @@ def cluster_function(df : pd.DataFrame)-> pd.DataFrame:
     except Exception as e:
         logger.error("Error in clustering marks dataset : %s", e)
         raise
-    
-def recommend_songs(input_df, prod_df, exercise_id, tempo, genre,top_n=5):
+
+def recommend_songs(exercise_df, prod_df,exercise_id, tempo, genre, top_n=5):
     """
     Recommend top_n songs similar to the given exercise and tempo.
-    
-    Parameters:
-        input_df (pd.DataFrame): DataFrame with exercise_id, tempo, feature_vector
-        prod_df (pd.DataFrame): DataFrame with song info and feature_vector
-        exercise_id (int): ID of the exercise selected by the user
-        tempo (int/float): Tempo selected by the user
-        genre (string) : Genre fo the song to recommend
-        top_n (int): Number of recommendations
-    
-    Returns:
-        pd.DataFrame: Top N recommended songs with similarity scores
+    Works on PCA-reduced vectors.
     """
     try:
-        exercise_row = input_df[(input_df['exercise_id'] == exercise_id) & 
-                                (input_df['tempo'] == tempo)]
-            
+        exercise_row = exercise_df[
+            (exercise_df['exercise_id'] == exercise_id) & 
+            (exercise_df['tempo'] == tempo)
+        ]
         if exercise_row.empty:
             raise ValueError("No exercise found with given ID and tempo")
 
         exercise_vector = np.array(exercise_row['feature_vector'].iloc[0]).reshape(1, -1)
+        filtered_prod_df = prod_df[prod_df['maingenre'] == genre]
+        if filtered_prod_df.empty:
+            raise ValueError(f"No songs found in genre '{genre}'")
 
-        song_vectors = np.vstack(prod_df['feature_vector'].values)
-        
-        similarities = cosine_similarity(exercise_vector, song_vectors)[0]
+        similarities = []
+        for vec in filtered_prod_df['feature_vector'].values:
+            sin = np.dot(exercise_vector, vec) / (np.linalg.norm(exercise_vector) * np.linalg.norm(vec))
+            similarities.append(sin)
 
-        prod_df['similarity'] = similarities
-        
-        recommendations = prod_df[(prod_df['maingenre'] == genre)]
-        top_recommendations = recommendations.sort_values(by='similarity', ascending=False).head(top_n)
-        
-        return top_recommendations[['trackname', 'artistnames', 'maingenre','chords', 'difficulty_level']]
+        filtered_prod_df = filtered_prod_df.copy()
+        filtered_prod_df['similarity'] = similarities
+        top_recommendations = filtered_prod_df.sort_values(by='similarity', ascending=False).head(top_n)
+        return top_recommendations[['trackname', 'artistnames', 'maingenre', 'chords', 'difficulty_level']]
     except Exception as e:
         logger.error("Error in generating recommendations : %s", e)
         raise
-    
-recommended_history = set()
 
-def recommend_songs_random(genre, n=5) -> list:
+def recommend_songs_random(genre,songs_df, recommended_cache, n=5) -> list:
     """
-    Function to retrieve 5 random recomendations
+    Cluster function to retrieve random songs
 
     Args:
-        genre (_type_): genre to filter
-        n (int, optional): _description_. Defaults to 5.
+        genre (_type_): String value
+        n (int, optional): Number of records to retrieve Defaults to 5.
 
     Returns:
-        list: List of songs
+        list: _description_
     """
     try:
-        global recommended_history # pylint: disable=global-variable-not-assigned
-        base_dir_temp = os.path.dirname(os.path.abspath(__file__))
-        songs_df = pd.read_parquet((os.path.join(base_dir_temp, '..', 'data', 'processed', 'prod_data.parquet')))
+        if songs_df.empty:
+            return {"error": "Dataset not loaded"}
+
         genre_songs = songs_df[songs_df["maingenre"] == genre]
-        
-        available_songs = genre_songs[~genre_songs["trackname"].isin(recommended_history)]
-        
+
+        available_songs = genre_songs[~genre_songs["trackname"].isin(recommended_cache)]
+
         if available_songs.empty:
-            return f"No new songs available for genre: {genre}"
-        
+            return {"error": f"No new songs available for genre: {genre}"}
+
         selected = available_songs.sample(min(n, len(available_songs)), replace=False)
-        
-        recommended_history.update(selected["trackname"].tolist())
-        
-        return selected[["trackname", "artistnames", "maingenre", "chords", "difficulty_level"]]
+
+        recommended_cache.update(selected["trackname"].tolist())
+
+        return selected[["trackname", "artistnames", "maingenre", "chords", 
+                            "difficulty_level"]].to_dict(orient="records"),recommended_cache
     except Exception as e:
-        logger.error("Error retreiving random recomendations : %s", e)
+        logger.error("Error retrieving random recommendations: %s", e)
         raise
-    
+
 if __name__ == '__main__':
     base_dir = os.path.dirname(os.path.abspath(__file__))
     marks_data_file_path = os.path.join(base_dir, '..', 'data', 'processed', 'marks_data.parquet')
