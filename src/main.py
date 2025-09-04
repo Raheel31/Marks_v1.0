@@ -3,12 +3,12 @@ import sys
 import pandas as pd
 from fastapi import FastAPI, Query
 import uvicorn
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 from model import recommend_songs as model1  # pylint: disable=import-error
 from model import recommend_songs_random as model2 # pylint: disable=import-error
 from logger import get_logger  # pylint: disable=import-error
+
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 logger = get_logger(__name__)
 
@@ -28,6 +28,7 @@ def home():
 @app.get("/random_exercises")
 def random_exercises(genre: str = Query(..., description="Genre of exercises")):
     try:
+        logger.info("Reading prod data")
         prod_df = pd.read_parquet(
             prod_file,
             engine="pyarrow",
@@ -47,6 +48,7 @@ def recommendations(
     genre: str = Query(..., description="Genre")
 ):
     try:
+        logger.info("Reading prod data")
         prod_df = pd.read_parquet(
             prod_file,
             engine="pyarrow",
