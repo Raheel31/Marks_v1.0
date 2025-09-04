@@ -54,20 +54,25 @@ def recommend_songs(exercise_df, prod_df,exercise_id, tempo, genre, top_n=5):
     Works on PCA-reduced vectors.
     """
     try:
-        exercise_row = exercise_df[(exercise_df['exercise_id'] == exercise_id) & 
-                                   (exercise_df['tempo'] == tempo)]
+        exercise_row = exercise_df[
+            (exercise_df['exercise_id'] == exercise_id) & 
+            (exercise_df['tempo'] == tempo)
+        ]
         if exercise_row.empty:
             raise ValueError("No exercise found with given ID and tempo")
 
         exercise_vector = np.array(exercise_row['feature_vector'].iloc[0]).reshape(1, -1)
+        filtered_prod_df = prod_df[prod_df['maingenre'] == genre]
+        if filtered_prod_df.empty:
+            raise ValueError(f"No songs found in genre '{genre}'")
 
-        song_vectors = np.vstack(prod_df['feature_vector'].values)
+        song_vectors = np.vstack(filtered_prod_df['feature_vector'].values)
 
         similarities = cosine_similarity(exercise_vector, song_vectors)[0]
-        prod_df['similarity'] = similarities
+        filtered_prod_df = filtered_prod_df.copy()  # Avoid SettingWithCopyWarning
+        filtered_prod_df['similarity'] = similarities
 
-        recommendations = prod_df[prod_df['maingenre'] == genre]
-        top_recommendations = recommendations.sort_values(by='similarity', ascending=False).head(top_n)
+        top_recommendations = filtered_prod_df.sort_values(by='similarity', ascending=False).head(top_n)
 
         return top_recommendations[['trackname', 'artistnames', 'maingenre', 'chords', 'difficulty_level']]
     except Exception as e:

@@ -20,11 +20,6 @@ exercise_file = os.path.join(data_dir, "chord_exercises.parquet")
 
 app = FastAPI(title="Exercise Recommendation API")
 
-logger.info("Loading data at startup...")
-prod_df = pd.read_parquet(prod_file)
-exercise_df = pd.read_parquet(exercise_file)
-logger.info("Data loaded successfully!")
-
 @app.get("/")
 def home():
     return {"message": "Welcome to the Exercise Recommendation API"}
@@ -32,6 +27,11 @@ def home():
 @app.get("/random_exercises")
 def random_exercises(genre: str = Query(..., description="Genre of exercises")):
     try:
+        prod_df = pd.read_parquet(
+            prod_file,
+            engine="pyarrow",
+            filters=[("maingenre", "=", genre)]
+        )
         result = model2(genre, songs_df=prod_df)
         return {"genre": genre, "recommendations": result}
     except Exception as e: # pylint: disable=broad-exception-caught
@@ -45,6 +45,17 @@ def recommendations(
     genre: str = Query(..., description="Genre")
 ):
     try:
+        prod_df = pd.read_parquet(
+            prod_file,
+            engine="pyarrow",
+            filters=[("maingenre", "=", genre)],
+            columns=['trackname', 'artistnames', 'maingenre', 'chords', 'difficulty_level','feature_vector']
+        )
+        exercise_df = pd.read_parquet(
+            exercise_file,
+            engine="pyarrow",
+            filters=[("exercise_id", "=", exercise_id)]
+        )
         result = model1(
             exercise_df=exercise_df,
             prod_df=prod_df,
